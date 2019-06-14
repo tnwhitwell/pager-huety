@@ -77,8 +77,12 @@ class PagerHuety(object):
 
         self.bridge.get_light_objects()
         light = self.bridge.lights_by_id[light_id]
+
+        self.bridge.lights_by_id[light_id]
+        previous_state = self.bridge.get_light(light_id)['state']
+
         # turn light on
-        self.bridge.set_light(light_id, 'on', True)
+        light.on = True
 
         # blink red and blue
         for _ in range(0, 2):
@@ -91,8 +95,10 @@ class PagerHuety(object):
         light.xy = [.2, .2]
         sleep(10)
 
-        # turn light off
-        self.bridge.set_light(light_id, 'on', False)
+        # Set light back to previous state
+        light.on = previous_state['on']
+        light.hue = previous_state['hue']
+        light.xy = previous_state['xy']
 
         return
 
@@ -122,6 +128,7 @@ def main():
 
     # Configure log level
     log_level = getattr(logging, args.log_level.upper(), None)
+    print(log_level)
     if not isinstance(log_level, int):
         raise ValueError('Invalid log level: %s' % args.log_level)
     phue_logger = logging.getLogger('phue')
@@ -139,7 +146,7 @@ def main():
 
     incidents = ph.fetch_incidents(args.user_filter)
 
-    if incidents['total'] != 0 or args.test:
+    if incidents['total'] not in (0, None) or args.test:
         logger.info('Triggering lights')
         ph.flash_light(args.lamp)
 
